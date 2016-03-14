@@ -1,8 +1,8 @@
 # Pingmeback
- :telephone_receiver: HTTP Service for today web monitoring. Pingmeback is a distant http client as
-a Service. It is really useful for example when a webserver wants too know if
-its application is reachable from the internet in a reasonable time. This
-service can be used alongside Sensu monitoring.
+ :telephone_receiver: HTTP Service for today web monitoring. Pingmeback is a
+distant http client as a Service. It is really useful for example when a
+webserver wants to know if its application is reachable from the internet in
+a reasonable time. This service can be used alongside Sensu monitoring.
 
 ## Build
 `go get -u github.com/yanc0/pingmeback`
@@ -10,16 +10,15 @@ service can be used alongside Sensu monitoring.
 ## API Usage
 
 ```
-$ curl -XPOST pingmeback.local -d '{"url": "https://www.google.com"}
+$ curl -XPOST http://pingmeback.me.com/check -d '{"url": "https://www.google.com"}
 {
   "http_status":"200 OK",
   "http_status_code":200,
   "http_body":"[...]",
-  "http_request_time":471,
+  "http_request_time":471, <-- (ms)
   "ssl":true,
   "ssl_expiry_date":"2016-05-31T00:00:00Z"
 }
-
 ```
 
 ## To Do
