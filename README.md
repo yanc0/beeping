@@ -1,5 +1,5 @@
 # Pingmeback
-HTTP Service for today web monitoring. Pingmeback is a distant http client as
+ :telephone_receiver: HTTP Service for today web monitoring. Pingmeback is a distant http client as
 a Service. It is really useful for example when a webserver wants too know if
 its application is reachable from the internet in a reasonable time. This
 service can be use alongside Sensu monitoring.
@@ -21,6 +21,10 @@ $ curl -XPOST pingmeback.local -d '{"url": "https://www.google.com"}
 }
 
 ```
+
+## To Do
+- [ ] Add HTTP Auth
+- [ ] Add tests
 
 ## Contributing
 
