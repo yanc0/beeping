@@ -1,3 +1,7 @@
+# Binaries
+pingmeback
+gin-bin
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
