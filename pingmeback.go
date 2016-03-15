@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,14 +11,15 @@ import (
 
 // Check defines the check to do
 type Check struct {
-	URL string `json:"url" binding:"required"`
+	URL     string `json:"url" binding:"required"`
+	Pattern string `json:"pattern"`
 }
 
 // Response defines the response to bring back
 type Response struct {
 	HTTPStatus        string    `json:"http_status"`
 	HTTPStatusCode    int       `json:"http_status_code"`
-	HTTPBody          string    `json:"http_body"`
+	HTTPBodyPattern   bool      `json:"http_body_pattern"`
 	HTTPRequestTime   int64     `json:"http_request_time"`
 	HTTPSSL           bool      `json:"ssl"`
 	HTTPSSLExpiryDate time.Time `json:"ssl_expiry_date"`
@@ -38,6 +40,8 @@ func handlercheck(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusOK, response)
 		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid json sent"})
 	}
 }
 
@@ -55,9 +59,13 @@ func CheckHTTP(check *Check) (*Response, error) {
 		return nil, err
 	}
 	elapsed := time.Since(start)
+	pattern := true
+	if !strings.Contains(string(body), check.Pattern) {
+		pattern = false
+	}
 	response.HTTPStatus = resp.Status
 	response.HTTPStatusCode = resp.StatusCode
-	response.HTTPBody = string(body)
+	response.HTTPBodyPattern = pattern
 	response.HTTPRequestTime = elapsed.Nanoseconds() / 1000 / 1000
 	if resp.TLS != nil {
 		response.HTTPSSL = true

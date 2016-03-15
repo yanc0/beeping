@@ -10,16 +10,18 @@ a reasonable time. This service can be used alongside Sensu monitoring.
 ## API Usage
 
 ```
-$ curl -XPOST http://pingmeback.me.com/check -d '{"url": "https://www.google.com"}
+$ curl -XPOST http://pingback.me.com/check -d '{"url": "https://www.mysite.com/cats", "pattern": "grumpy cat"}
 {
-  "http_status":"200 OK",
-  "http_status_code":200,
-  "http_body":"[...]",
-  "http_request_time":471, <-- (ms)
-  "ssl":true,
-  "ssl_expiry_date":"2016-05-31T00:00:00Z"
+  "http_status": "200 OK",
+  "http_status_code": 200,
+  "http_body_pattern": true,
+  "http_request_time": 471, <-- (ms)
+  "ssl": true,
+  "ssl_expiry_date": "2016-05-31T00:00:00Z"
 }
 ```
+
+If pattern is not filled `http_body_pattern` is always `true`
 
 ## To Do
 - [ ] Add HTTP Auth
