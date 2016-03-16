@@ -1,4 +1,5 @@
 # Pingmeback
+[![Build Status](https://travis-ci.org/yanc0/pingmeback.svg?branch=master)](https://travis-ci.org/yanc0/pingmeback)
  :telephone_receiver: HTTP Service for today web monitoring. Pingmeback is a
 distant http client as a Service. It is really useful for example when a
 webserver wants to know if its application is reachable from the internet in
