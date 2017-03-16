@@ -7,12 +7,12 @@ distant http check as a Service. It is really useful for example when a
 webserver wants to know if its application is reachable from the internet in
 a reasonable time. This service can be used alongside Sensu monitoring.
 
-Another use case is the capabilities to ask for checks from differents countries
+Another use case is to ask for checks from differents countries
 and measure responses time.
 
 Big hugs to :
 
-* Dave Cheney for his inspirationnal work on [httpstat](https://github.com/davecheney/httpstat)
+* Dave Cheney for his inspirational work on [httpstat](https://github.com/davecheney/httpstat)
 * Taichi Nakashima for his work on httpstat lib [go-httpstat](https://github.com/tcnksm/go-httpstat)
 
 
