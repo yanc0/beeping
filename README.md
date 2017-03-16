@@ -1,11 +1,20 @@
-# Pingmeback
+# Pingmeback v0.2.0
 [![Build Status](https://travis-ci.org/yanc0/pingmeback.svg?branch=master)](https://travis-ci.org/yanc0/pingmeback)
 
 
- :telephone_receiver: HTTP Service for today web monitoring. Pingmeback is a
-distant http client as a Service. It is really useful for example when a
+ :telephone\_receiver: HTTP Service for today web monitoring. Pingmeback is a
+distant http check as a Service. It is really useful for example when a
 webserver wants to know if its application is reachable from the internet in
 a reasonable time. This service can be used alongside Sensu monitoring.
+
+Another use case is the capabilities to ask for checks from differents countries
+and measure responses time.
+
+Big hugs to :
+
+* Dave Cheney for his inspirationnal work on [httpstat](https://github.com/davecheney/httpstat)
+* Taichi Nakashima for his work on httpstat lib [go-httpstat](https://github.com/tcnksm/go-httpstat)
+
 
 ## Build
 `go get -u github.com/yanc0/pingmeback`
@@ -13,22 +22,46 @@ a reasonable time. This service can be used alongside Sensu monitoring.
 ## API Usage
 
 ```
-$ curl -XPOST http://pingback.me.com/check -d '{"url": "https://www.mysite.com/cats", "pattern": "grumpy cat"}
+$ curl -XPOST http://pingback.me.com/check -d '{"url": "https://www.mysite.com/cats", "pattern": "grumpy cat", "insecure": false, "timeout": 20}
 {
   "http_status": "200 OK",
   "http_status_code": 200,
   "http_body_pattern": true,
-  "http_request_time": 471, <-- (ms)
+  "http_request_time": 942,
+  "dns_lookup": 2,
+  "tcp_connection": 1,
+  "tls_handshake": 80,
+  "server_processing": 858,
+  "content_transfer": 0,
+  "timeline": {
+    "name_lookup": 2,
+    "connect": 3,
+    "pretransfer": 84,
+    "starttransfer": 942
+  },
   "ssl": true,
-  "ssl_expiry_date": "2016-05-31T00:00:00Z"
+  "ssl_expiry_date": "2018-11-22T23:59:59Z",
+  "ssl_days_left": 616
 }
 ```
 
-If pattern is not filled `http_body_pattern` is always `true`
+* If pattern is not filled `http_body_pattern` is always `true`
+* `tls_handshake`, `ssl_expiry_data` and `ssl_days_left` are not shown when `http://` only
+
+## Error Handling
+
+Pingmeback returns HTTP 500 when check fail. The body contains the reason of the failure.
+
+```
+{
+  "message": "Get https://mysite.com/health: net/http: request canceled (Client Timeout exceeded while awaiting headers)"
+}
+```
 
 ## To Do
 - [ ] Add HTTP Auth
 - [ ] Add tests
+- [ ] More metrics
 
 ## Contributing
 
