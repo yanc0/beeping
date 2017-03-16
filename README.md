@@ -58,7 +58,8 @@ Pingmeback returns HTTP 500 when check fail. The body contains the reason of the
 }
 ```
 
-## To Do
+## To Do
+
 - [ ] Add HTTP Auth
 - [ ] Add tests
 - [ ] More metrics
