@@ -15,6 +15,15 @@ Big hugs to :
 * Dave Cheney for his inspirational work on [httpstat](https://github.com/davecheney/httpstat)
 * Taichi Nakashima for his work on httpstat lib [go-httpstat](https://github.com/tcnksm/go-httpstat)
 
+## Install
+
+Download latest version on [releases page](https://github.com/yanc0/pingmeback/releases)
+
+- `chmod +x pingmeback`
+- `sudo mv pingmeback /usr/bin`
+- `pingmeback`
+
+Pingmeback listens on 8080
 
 ## Build
 `go get -u github.com/yanc0/pingmeback`
@@ -63,12 +72,13 @@ Pingmeback returns HTTP 500 when check fail. The body contains the reason of the
 - [ ] Add HTTP Auth
 - [ ] Add tests
 - [ ] More metrics
+- [ ] Packaging
 
 ## Contributing
 
 Feel free to make a pull request.
 
-## Licence
+## Licence
 
 ```
 The MIT License (MIT)
