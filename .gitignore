@@ -10,6 +10,10 @@ gin-bin
 # Folders
 _obj
 _test
+vendor
+
+# IDE
+.idea
 
 # Architecture specific extensions/prefixes
 *.[568vq]
