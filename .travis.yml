@@ -3,7 +3,7 @@ go:
 - '1.8.1'
 install:
   - go get -u github.com/golang/dep
-  - dep ensure
+  - $GOPATH/bin/dep ensure
   - go build
 deploy:
   provider: releases
