@@ -1,6 +1,9 @@
 language: go
 go:
 - '1.8'
+install:
+  - dep ensure
+  - go build
 deploy:
   provider: releases
   api_key:
