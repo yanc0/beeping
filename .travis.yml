@@ -3,7 +3,6 @@ go:
 - '1.8.1'
 install:
   - go get -u github.com/golang/dep
-  - which dep
   - ls $GOPATH/bin
   - ls -alih
   - $GOPATH/bin/dep ensure
