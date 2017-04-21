@@ -1,7 +1,8 @@
 language: go
 go:
-- '1.8'
+- '1.8.1'
 install:
+  - go get -u github.com/golang/dep
   - dep ensure
   - go build
 deploy:
