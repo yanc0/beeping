@@ -90,6 +90,15 @@ Pingmeback returns HTTP 500 when check fail. The body contains the reason of the
 }
 ```
 
+## Changelog
+
+### 0.3.0 - 2017-04-21
+
+  * Pingmeback now returns geoip informations
+  * Add Instance name in results
+  * Add vendoring system
+
+
 ## To Do
 
 - [ ] Add HTTP Auth
