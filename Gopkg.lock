@@ -1,4 +1,4 @@
-memo = "b309e1d97149ef6dc4fbc18a049c1586cb330bb2165fe9c85d60943063ab30a7"
+memo = "85a9af901e8e5abbab7be176652cf5619eae1955e8e11be0db6e4dbc449c6b57"
 
 [[projects]]
   name = "github.com/gin-gonic/gin"
@@ -25,10 +25,21 @@ memo = "b309e1d97149ef6dc4fbc18a049c1586cb330bb2165fe9c85d60943063ab30a7"
   version = "v0.0.2"
 
 [[projects]]
+  name = "github.com/oschwald/geoip2-golang"
+  packages = ["."]
+  revision = "496a3cbcb65a3cb54497fe4ae2273319e85160a4"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/oschwald/maxminddb-golang"
+  packages = ["."]
+  revision = "4cf6490e82edd288b91d6a786d85dab042015e24"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/tcnksm/go-httpstat"
   packages = ["."]
-  revision = "ae0d799e7ee65d3dc46d7272368daa830aef6c5a"
-  version = "v0.2.0"
+  revision = "fae40520f4ba0a112874d1f0deb9498ebb2198cb"
 
 [[projects]]
   branch = "master"
@@ -39,7 +50,7 @@ memo = "b309e1d97149ef6dc4fbc18a049c1586cb330bb2165fe9c85d60943063ab30a7"
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = ["unix","windows"]
   revision = "f3918c30c5c2cb527c0b071a27c35120a6c0719a"
 
 [[projects]]

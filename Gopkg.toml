@@ -1,0 +1,4 @@
+
+[[dependencies]]
+  name = "github.com/tcnksm/go-httpstat"
+  revision = "fae40520f4ba0a112874d1f0deb9498ebb2198cb"
