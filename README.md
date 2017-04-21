@@ -30,7 +30,7 @@ Usage of ./pingmeback:
 
 Pingmeback listens on 8080
 
-### Optional
+### Optional
 
 You can plug MaxMind GeoIP file to know on which country the pings goes.
 
@@ -92,7 +92,7 @@ Pingmeback returns HTTP 500 when check fail. The body contains the reason of the
 
 ## Changelog
 
-### 0.3.0 - 2017-04-21
+### 0.3.0 - 2017-04-21
 
   * Pingmeback now returns geoip informations
   * Add Instance name in results
