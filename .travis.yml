@@ -2,9 +2,8 @@ language: go
 go:
 - '1.8.1'
 install:
-  - go get -u github.com/golang/dep
+  - go get -u github.com/golang/dep/...
   - $GOPATH/bin/dep ensure
-  - go build
 deploy:
   provider: releases
   api_key:
