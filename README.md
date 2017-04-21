@@ -1,14 +1,10 @@
-# Pingmeback v0.2.0
+# Pingmeback v0.3.0
 [![Build Status](https://travis-ci.org/yanc0/pingmeback.svg?branch=master)](https://travis-ci.org/yanc0/pingmeback)
 
 
  :telephone\_receiver: HTTP Service for today web monitoring. Pingmeback is a
-distant http check as a Service. It is really useful for example when a
-webserver wants to know if its application is reachable from the internet in
-a reasonable time. This service can be used alongside Sensu monitoring.
-
-Another use case is to ask for checks from differents countries
-and measure responses time.
+distant http check as a Service. Deploy instances in seconds and measure your
+websites from anywhere in the world.
 
 Big hugs to :
 
@@ -23,39 +19,66 @@ Download latest version on [releases page](https://github.com/yanc0/pingmeback/r
 - `sudo mv pingmeback /usr/bin`
 - `pingmeback`
 
+```
+$ ./pingmeback -h
+Usage of ./pingmeback:
+  -geodatfile string
+    	geoIP database path (default "/opt/GeoIP/GeoLite2-City.mmdb")
+  -instance string
+    	pingmeback instance name (default hostname)
+```
+
 Pingmeback listens on 8080
 
+### Optional
+
+You can plug MaxMind GeoIP file to know on which country the pings goes.
+
+See: http://dev.maxmind.com/geoip/geoip2/geolite2/
+
 ## Build
-`go get -u github.com/yanc0/pingmeback`
+```shell
+go get -u github.com/golang/dep
+go get -u github.com/yanc0/pingmeback
+cd $GOPATH/src/github.com/yanc0/pingmeback
+dep ensure
+go build
+```
 
 ## API Usage
 
 ```
-$ curl -XPOST http://pingback.me.com/check -d '{"url": "https://www.mysite.com/cats", "pattern": "grumpy cat", "insecure": false, "timeout": 20}
+$ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "pattern": "find me", "insecure": false, "timeout": 20}
 {
   "http_status": "200 OK",
   "http_status_code": 200,
   "http_body_pattern": true,
-  "http_request_time": 942,
-  "dns_lookup": 2,
-  "tcp_connection": 1,
-  "tls_handshake": 80,
-  "server_processing": 858,
-  "content_transfer": 0,
+  "http_request_time": 119,
+  "instance_name": "X250",
+  "dns_lookup": 9,
+  "tcp_connection": 6,
+  "tls_handshake": 52,
+  "server_processing": 43,
+  "content_transfer": 6,
   "timeline": {
-    "name_lookup": 2,
-    "connect": 3,
-    "pretransfer": 84,
-    "starttransfer": 942
+    "name_lookup": 9,
+    "connect": 16,
+    "pretransfer": 68,
+    "starttransfer": 112
+  },
+  "geo": {
+    "country": "US",
+    "ip": "216.58.209.227"
   },
   "ssl": true,
-  "ssl_expiry_date": "2018-11-22T23:59:59Z",
-  "ssl_days_left": 616
+  "ssl_expiry_date": "2017-07-05T13:28:00Z",
+  "ssl_days_left": 74
 }
 ```
 
 * If pattern is not filled `http_body_pattern` is always `true`
 * `tls_handshake`, `ssl_expiry_data` and `ssl_days_left` are not shown when `http://` only
+* `geo` is omitted if geoip is not set
 
 ## Error Handling
 
