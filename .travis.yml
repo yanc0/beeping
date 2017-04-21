@@ -8,7 +8,7 @@ deploy:
   provider: releases
   api_key:
     secure: 2iNIkm/fdnEZOq+vEEBPQjvMBSsyZQtISOIlTMuUfKPsEAFNsUNCgG++lzqTPF02zijHvMTG7zs6YFoJyGE9JqeYymnvku+pMsi+QCF7DLLkotaGZqe4vEJQajuEhf1cqXp8qfRP6pDtAjfGNYgnVC3G3lbTr+oI51zcw4d9kpRoLycxWLSWT2ScJNCbGLUFycvOIEcddn54r/WEkwmwI1BiQhMpOU+Dqa8AIl7EjCFGvMDCnC2ha1g/GS1fh9diJruc1YLpwsHHdwfJTfVK9Rbf/X5jUf2j2uBiPPAiMyhM2iSVhOSD/uUyWa+9C2uWw+R3Y57G6Q272c4WZJfW8SFgNn9VwjwZo8nXlWd9O7XOm6u1THq/ns9Me25FkeYfamB0SLktptGe8WatzKrgueB5Oiu3+99ixzaqubWfRaK8U0uElXDbI/Rrfvd/+UjU1VOtIhztvb7P30UuLowa79ruHAcuKjjNKv8BXXBAsdvRckzNPxF5ov3+0MgUCxETs+7qEBTL4mxnKnfGsDdDxOk2w0vrJaztI/0hgjFba1AIZU1K3hDaomsn14DCnMwDHZ2nv+IktT2CncpX2stH8qLf5EA+3tyF/exdfGdoddUwa7NotnE48vjsQmScC+QlIWhkJDfKwv+SdSGHC1NU5LTQnxab1WhN242A5zh245o=
-  file: $GOPATH/bin/pingmeback
+  file: $GOPATH/src/github.com/yanc0/pingmeback/pingmeback
   on:
     tags: true
     
