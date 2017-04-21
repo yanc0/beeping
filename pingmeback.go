@@ -2,17 +2,24 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
+	"github.com/gin-gonic/gin"
+	"github.com/oschwald/geoip2-golang"
+	"github.com/tcnksm/go-httpstat"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
+	"net/http/httptrace"
+	"os"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/tcnksm/go-httpstat"
 )
 
-var VERSION = "0.2.0"
+var VERSION = "0.3.0"
 var MESSAGE = "Pingmeback instance - HTTP Ping as a Service"
+var geodatfile *string
+var instance *string
 
 type PMB struct {
 	Version string `json:"version"`
@@ -34,12 +41,20 @@ type Timeline struct {
 	StartTransfer int64 `json:"starttransfer"`
 }
 
+type Geo struct {
+	Country string `json:"country"`
+	City    string `json:"city,omitempty"`
+	IP      string `json:"ip"`
+}
+
 // Response defines the response to bring back
 type Response struct {
 	HTTPStatus      string `json:"http_status"`
 	HTTPStatusCode  int    `json:"http_status_code"`
 	HTTPBodyPattern bool   `json:"http_body_pattern"`
 	HTTPRequestTime int64  `json:"http_request_time"`
+
+	InstanceName string `json:"instance_name"`
 
 	DNSLookup        int64 `json:"dns_lookup"`
 	TCPConnection    int64 `json:"tcp_connection"`
@@ -48,6 +63,7 @@ type Response struct {
 	ContentTransfer  int64 `json:"content_transfer"`
 
 	Timeline *Timeline `json:"timeline"`
+	Geo      *Geo      `json:"geo,omitempty"`
 
 	HTTPSSL           bool       `json:"ssl"`
 	HTTPSSLExpiryDate *time.Time `json:"ssl_expiry_date,omitempty"`
@@ -65,7 +81,12 @@ func NewCheck() *Check {
 }
 
 func main() {
+	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
+	instance = flag.String("instance", "", "pingmeback instance name (default instance_name)")
+	flag.Parse()
+
 	gin.SetMode("release")
+
 	router := gin.Default()
 	router.POST("/check", handlercheck)
 	router.GET("/", handlerdefault)
@@ -96,6 +117,7 @@ func handlercheck(c *gin.Context) {
 // CheckHTTP do HTTP check and return a pingmeback reponse
 func CheckHTTP(check *Check) (*Response, error) {
 	var response = NewResponse()
+	var conn net.Conn
 
 	req, err := http.NewRequest("GET", check.URL, nil)
 	if err != nil {
@@ -105,6 +127,14 @@ func CheckHTTP(check *Check) (*Response, error) {
 	// Create go-httpstat powered context and pass it to http.Request
 	var result httpstat.Result
 	ctx := httpstat.WithHTTPStat(req.Context(), &result)
+
+	// Add IP:PORT tracing to the context
+	ctx = httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
+		GotConn: func(i httptrace.GotConnInfo) {
+			conn = i.Conn
+		},
+	})
+
 	req = req.WithContext(ctx)
 
 	// DefaultClient is not suitable cause it caches
@@ -119,6 +149,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	client := &http.Client{Transport: tr, Timeout: timeout}
 	res, err := client.Do(req)
+
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +158,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	res.Body.Close()
 	timeEndBody := time.Now()
 	result.End(timeEndBody)
@@ -157,9 +189,56 @@ func CheckHTTP(check *Check) (*Response, error) {
 		response.HTTPSSLExpiryDate = &res.TLS.PeerCertificates[0].NotAfter
 		response.HTTPSSLDaysLeft = int64(response.HTTPSSLExpiryDate.Sub(time.Now()).Hours() / 24)
 	}
+
+	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	_ = geoIPCountry(*geodatfile, ip, response)
+
+	err = instanceName(*instance, response)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
 	return response, nil
 }
 
 func Milliseconds(d time.Duration) int64 {
 	return d.Nanoseconds() / 1000 / 1000
+}
+
+func geoIPCountry(geodatabase string, ip string, response *Response) error {
+	db, err := geoip2.Open(*geodatfile)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	// If you are using strings that may be invalid, check that ip is not nil
+	ipParse := net.ParseIP(ip)
+	record, err := db.City(ipParse)
+	if err != nil {
+		return err
+	}
+	response.Geo = &Geo{}
+	response.Geo.Country = record.Country.IsoCode
+	response.Geo.IP = ip
+	if record.Country.Names != nil {
+		response.Geo.City = record.City.Names["en-EN"]
+	}
+	return nil
+}
+
+func instanceName(name string, response *Response) error {
+	var err error
+	response.InstanceName = name
+	if name == "" {
+		response.InstanceName, err = os.Hostname()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
