@@ -17,7 +17,7 @@ import (
 )
 
 var VERSION = "0.3.0"
-var MESSAGE = "Pingmeback instance - HTTP Ping as a Service"
+var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
 var geodatfile *string
 var instance *string
 
@@ -82,7 +82,7 @@ func NewCheck() *Check {
 
 func main() {
 	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
-	instance = flag.String("instance", "", "pingmeback instance name (default instance_name)")
+	instance = flag.String("instance", "", "beeping instance name (default instance_name)")
 	flag.Parse()
 
 	gin.SetMode("release")
@@ -114,7 +114,7 @@ func handlercheck(c *gin.Context) {
 	}
 }
 
-// CheckHTTP do HTTP check and return a pingmeback reponse
+// CheckHTTP do HTTP check and return a beeping reponse
 func CheckHTTP(check *Check) (*Response, error) {
 	var response = NewResponse()
 	var conn net.Conn
