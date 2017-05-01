@@ -114,7 +114,7 @@ func handlercheck(c *gin.Context) {
 	}
 }
 
-// CheckHTTP do HTTP check and return a beeping reponse
+// CheckHTTP do HTTP check and return a beeping response
 func CheckHTTP(check *Check) (*Response, error) {
 	var response = NewResponse()
 	var conn net.Conn
