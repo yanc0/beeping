@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var VERSION = "0.3.0"
+var VERSION = "0.4.0"
 var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
 var geodatfile *string
 var instance *string
