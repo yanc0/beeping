@@ -20,6 +20,8 @@ var VERSION = "0.3.0"
 var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
 var geodatfile *string
 var instance *string
+var listen *string
+var port *string
 
 type PMB struct {
 	Version string `json:"version"`
@@ -82,7 +84,9 @@ func NewCheck() *Check {
 
 func main() {
 	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
-	instance = flag.String("instance", "", "beeping instance name (default instance_name)")
+	instance = flag.String("instance", "", "beeping instance name (default hostname)")
+	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
+	port = flag.String("port", "8080", "The port to bind the server to")
 	flag.Parse()
 
 	gin.SetMode("release")
@@ -90,7 +94,9 @@ func main() {
 	router := gin.Default()
 	router.POST("/check", handlercheck)
 	router.GET("/", handlerdefault)
-	router.Run()
+
+	log.Println("[INFO] Listening on", *listen, *port)
+	router.Run(*listen + ":" + *port)
 }
 
 func handlerdefault(c *gin.Context) {
