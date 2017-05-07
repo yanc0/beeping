@@ -49,7 +49,11 @@ Usage of ./beeping:
     	beeping instance name (default hostname)
 ```
 
-beeping listens on 8080, if no GeoIP database is found, BeePing omit geo response silently
+beeping listens on 8080. You can choose the port by setting PORT env var
+
+`PORT=3000 /usr/bin/beeping`
+
+If no GeoIP database is found, BeePing omit geo response silently
 
 ### Optional
 

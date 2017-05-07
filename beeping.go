@@ -16,10 +16,12 @@ import (
 	"time"
 )
 
-var VERSION = "0.3.0"
+var VERSION = "0.4.0"
 var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
 var geodatfile *string
 var instance *string
+var listen *string
+var port *string
 
 type Beeping struct {
 	Version string `json:"version"`
@@ -82,15 +84,19 @@ func NewCheck() *Check {
 
 func main() {
 	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
-	instance = flag.String("instance", "", "beeping instance name (default instance_name)")
+	instance = flag.String("instance", "", "beeping instance name (default hostname)")
+	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
+	port = flag.String("port", "8080", "The port to bind the server to")
 	flag.Parse()
 
 	gin.SetMode("release")
 
 	router := gin.New()
-	router.POST("/check", handlerCheck)
-	router.GET("/", handlerDefault)
-	router.Run()
+	router.POST("/check", handlercheck)
+	router.GET("/", handlerdefault)
+
+	log.Println("[INFO] Listening on", *listen, *port)
+	router.Run(*listen + ":" + *port)
 }
 
 func handlerDefault(c *gin.Context) {
@@ -118,7 +124,7 @@ func handlerCheck(c *gin.Context) {
 	}
 }
 
-// CheckHTTP do HTTP check and return a beeping reponse
+// CheckHTTP do HTTP check and return a beeping response
 func CheckHTTP(check *Check) (*Response, error) {
 	var response = NewResponse()
 	var conn net.Conn
