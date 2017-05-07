@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -110,6 +111,16 @@ func handlerDefault(c *gin.Context) {
 func handlerCheck(c *gin.Context) {
 	var check = NewCheck()
 	if c.BindJSON(&check) == nil {
+		// Check for local URLs
+		regexbadurl, err := regexp.Compile(`((http://)|(https://))((127\.)|(10\.)|(172\.1[6-9]\.)|(172\.2[0-9]\.)|(172\.3[0-1]\.)|(192\.168\.))`)
+		if err != nil {
+			log.Println(err.Error())
+			return
+		}
+		if regexbadurl.MatchString(check.URL) {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "disallowed IP address"})
+			return
+		}
 		response, err := CheckHTTP(check)
 		if err != nil {
 			log.Println("[WARN] Check failed:", err.Error())
