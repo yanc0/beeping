@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
+	"github.com/yanc0/beeping/sslcheck"
 	"io/ioutil"
 	"log"
 	"net"
@@ -62,12 +63,9 @@ type Response struct {
 	ServerProcessing int64 `json:"server_processing"`
 	ContentTransfer  int64 `json:"content_transfer"`
 
-	Timeline *Timeline `json:"timeline"`
-	Geo      *Geo      `json:"geo,omitempty"`
-
-	HTTPSSL           bool       `json:"ssl"`
-	HTTPSSLExpiryDate *time.Time `json:"ssl_expiry_date,omitempty"`
-	HTTPSSLDaysLeft   int64      `json:"ssl_days_left,omitempty"`
+	Timeline *Timeline          `json:"timeline"`
+	Geo      *Geo               `json:"geo,omitempty"`
+	SSL      *sslcheck.CheckSSL `json:"ssl,omitempty"`
 }
 
 func NewResponse() *Response {
@@ -142,14 +140,15 @@ func CheckHTTP(check *Check) (*Response, error) {
 	// Allow us to close Idle connections and reset network
 	// metrics each time
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: check.Insecure},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: check.Insecure,
+		},
 	}
 
 	timeout := time.Duration(check.Timeout * time.Second)
 
 	client := &http.Client{Transport: tr, Timeout: timeout}
 	res, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +162,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 	timeEndBody := time.Now()
 	result.End(timeEndBody)
 	var total = result.Total(timeEndBody)
+
 	tr.CloseIdleConnections()
 
 	pattern := true
@@ -185,9 +185,13 @@ func CheckHTTP(check *Check) (*Response, error) {
 	response.ContentTransfer = Milliseconds(result.ContentTransfer(timeEndBody))
 
 	if res.TLS != nil {
-		response.HTTPSSL = true
-		response.HTTPSSLExpiryDate = &res.TLS.PeerCertificates[0].NotAfter
-		response.HTTPSSLDaysLeft = int64(response.HTTPSSLExpiryDate.Sub(time.Now()).Hours() / 24)
+		cTLS := &sslcheck.CheckSSL{}
+		cTLS.CheckCiphers(conn)
+		cTLS.CheckVersions(conn)
+		cTLS.CertExpiryDate = res.TLS.PeerCertificates[0].NotAfter
+		cTLS.CertExpiryDaysLeft = int64(cTLS.CertExpiryDate.Sub(time.Now()).Hours() / 24)
+		cTLS.CertSignature = res.TLS.PeerCertificates[0].SignatureAlgorithm.String()
+		response.SSL = cTLS
 	}
 
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
