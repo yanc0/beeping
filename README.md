@@ -1,4 +1,4 @@
-# BeePing v0.4.0
+# BeePing v0.5.0
 [![Build Status](https://travis-ci.org/yanc0/beeping.svg?branch=master)](https://travis-ci.org/yanc0/beeping)
 
 _previously named pingmeback_
@@ -23,6 +23,7 @@ Features:
 * Lot of metrics
 * Timeline of HTTP request
 * SSL Expiration check
+* Server SSL/TLS version and Ciphers
 * Pattern check (search for text in response)
 * GeoIP resolution
 * Single binary
@@ -44,16 +45,22 @@ Download latest version on [releases page](https://github.com/yanc0/beeping/rele
 $ ./beeping -h
 Usage of ./beeping:
   -geodatfile string
-    	geoIP database path (default "/opt/GeoIP/GeoLite2-City.mmdb")
+        geoIP database path (default "/opt/GeoIP/GeoLite2-City.mmdb")
   -instance string
-    	beeping instance name (default hostname)
+        beeping instance name (default hostname)
+  -listen string
+        The host to bind the server to (default "127.0.0.1")
+  -port string
+        The port to bind the server to (default "8080")
+  -tlsmode
+        Activate SSL/TLS versions and Cipher support checks (slow)
 ```
 
-beeping listens on 8080. You can choose the port by setting PORT env var
+**Notes**
 
-`PORT=3000 /usr/bin/beeping`
-
-If no GeoIP database is found, BeePing omit geo response silently
+* If no GeoIP database is found, BeePing omit geo response silently
+* TLSMode returns more infos on SSL object. It tries the more ciphers and TLS version
+  Golang can test but the checks can be way slower.
 
 ### Optional
 
@@ -73,36 +80,59 @@ go build
 ## API Usage
 
 ```
-$ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "pattern": "find me", "insecure": false, "timeout": 20}
+$ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "pattern": "find me", "header": "Server:GitHub.com", "insecure": false, "timeout": 20}
 {
   "http_status": "200 OK",
   "http_status_code": 200,
   "http_body_pattern": true,
-  "http_request_time": 119,
+  "http_header": true,
+  "http_request_time": 716,
   "instance_name": "X250",
-  "dns_lookup": 9,
-  "tcp_connection": 6,
-  "tls_handshake": 52,
-  "server_processing": 43,
-  "content_transfer": 6,
+  "dns_lookup": 14,
+  "tcp_connection": 101,
+  "tls_handshake": 228,
+  "server_processing": 168,
+  "content_transfer": 203,
   "timeline": {
-    "name_lookup": 9,
-    "connect": 16,
-    "pretransfer": 68,
-    "starttransfer": 112
+    "name_lookup": 14,
+    "connect": 115,
+    "pretransfer": 344,
+    "starttransfer": 512
   },
   "geo": {
     "country": "US",
-    "ip": "216.58.209.227"
+    "ip": "192.30.253.112"
   },
-  "ssl": true,
-  "ssl_expiry_date": "2017-07-05T13:28:00Z",
-  "ssl_days_left": 74
+  "ssl": {
+    "ciphers": [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_RSA_WITH_RC4_128_SHA",
+      "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+      "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
+      "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA"
+    ],
+    "protocol_versions": [
+      "TLS12",
+      "TLS10",
+      "TLS11"
+    ],
+    "cert_expiry_date": "2018-05-17T12:00:00Z",
+    "cert_expiry_days_left": 374,
+    "cert_signature": "SHA256-RSA"
+  }
 }
 ```
 
 * If pattern is not filled `http_body_pattern` is always `true`
-* `tls_handshake`, `ssl_expiry_date` and `ssl_days_left` are not shown when `http://` only
+* If header is not filled `http_header` is always `true`
+* `ssl` is omitted when `http://`. The same for the `tls_handshake` field
 * `geo` is omitted if geoip is not set
 
 ## Error Handling
@@ -116,6 +146,15 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 ```
 
 ## Changelog
+
+### 0.5.0 - 2017-05-07
+
+  * Add TLS Mode, now show server supported ciphers and SSL/TLS versions
+  * Add listen / Port options (**breaking change**)
+  * Modify JSON response structure (**breaking change**)
+  * Add proper logging
+  * Set proper User-Agent
+  * Add header check
 
 ### 0.4.0 - 2017-04-24
 

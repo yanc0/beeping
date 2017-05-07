@@ -17,8 +17,10 @@ import (
 	"time"
 )
 
-var VERSION = "0.4.0"
+var VERSION = "0.5.0"
 var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
+var USERAGENT = "Beeping " + VERSION + " - https://github.com/yanc0/beeping"
+
 var geodatfile *string
 var instance *string
 var listen *string
@@ -34,6 +36,7 @@ type Beeping struct {
 type Check struct {
 	URL      string        `json:"url" binding:"required"`
 	Pattern  string        `json:"pattern"`
+	Header   string        `json:"header"`
 	Insecure bool          `json:"insecure"`
 	Timeout  time.Duration `json:"timeout"`
 }
@@ -56,6 +59,7 @@ type Response struct {
 	HTTPStatus      string `json:"http_status"`
 	HTTPStatusCode  int    `json:"http_status_code"`
 	HTTPBodyPattern bool   `json:"http_body_pattern"`
+	HTTPHeader	bool   `json:"http_header"`
 	HTTPRequestTime int64  `json:"http_request_time"`
 
 	InstanceName string `json:"instance_name"`
@@ -86,7 +90,7 @@ func main() {
 	instance = flag.String("instance", "", "beeping instance name (default hostname)")
 	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
 	port = flag.String("port", "8080", "The port to bind the server to")
-	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks")
+	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks (slow)")
 	flag.Parse()
 
 	gin.SetMode("release")
@@ -134,6 +138,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 		return nil, err
 	}
 
+	req.Header.Set("User-Agent", USERAGENT)
 	// Create go-httpstat powered context and pass it to http.Request
 	var result httpstat.Result
 	ctx := httpstat.WithHTTPStat(req.Context(), &result)
@@ -182,19 +187,28 @@ func CheckHTTP(check *Check) (*Response, error) {
 		pattern = false
 	}
 
+	header := true
+	if check.Header != "" {
+		key, value := splitCheckHeader(check.Header)
+		if key != "" && value != "" && res.Header.Get(key) != value {
+			header = false
+		}
+	}
+
 	response.HTTPStatus = res.Status
 	response.HTTPStatusCode = res.StatusCode
 	response.HTTPBodyPattern = pattern
-	response.HTTPRequestTime = Milliseconds(total)
-	response.Timeline.NameLookup = Milliseconds(result.NameLookup)
-	response.Timeline.Connect = Milliseconds(result.Connect)
-	response.Timeline.Pretransfer = Milliseconds(result.Pretransfer)
-	response.Timeline.StartTransfer = Milliseconds(result.StartTransfer)
-	response.DNSLookup = Milliseconds(result.DNSLookup)
-	response.TCPConnection = Milliseconds(result.TCPConnection)
-	response.TLSHandshake = Milliseconds(result.TLSHandshake)
-	response.ServerProcessing = Milliseconds(result.ServerProcessing)
-	response.ContentTransfer = Milliseconds(result.ContentTransfer(timeEndBody))
+	response.HTTPHeader = header
+	response.HTTPRequestTime = milliseconds(total)
+	response.Timeline.NameLookup = milliseconds(result.NameLookup)
+	response.Timeline.Connect = milliseconds(result.Connect)
+	response.Timeline.Pretransfer = milliseconds(result.Pretransfer)
+	response.Timeline.StartTransfer = milliseconds(result.StartTransfer)
+	response.DNSLookup = milliseconds(result.DNSLookup)
+	response.TCPConnection = milliseconds(result.TCPConnection)
+	response.TLSHandshake = milliseconds(result.TLSHandshake)
+	response.ServerProcessing = milliseconds(result.ServerProcessing)
+	response.ContentTransfer = milliseconds(result.ContentTransfer(timeEndBody))
 
 	if res.TLS != nil {
 		cTLS := &sslcheck.CheckSSL{}
@@ -223,7 +237,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 	return response, nil
 }
 
-func Milliseconds(d time.Duration) int64 {
+func milliseconds(d time.Duration) int64 {
 	return d.Nanoseconds() / 1000 / 1000
 }
 
@@ -259,4 +273,12 @@ func instanceName(name string, response *Response) error {
 	}
 
 	return nil
+}
+
+func splitCheckHeader(header string) (string, string) {
+	h := strings.SplitN(header, ":", 2)
+	if len(h) == 2 {
+		return strings.TrimSpace(h[0]), strings.TrimSpace(h[1])
+	}
+	return "", ""
 }
