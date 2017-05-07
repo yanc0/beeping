@@ -68,8 +68,6 @@ func (c *CheckSSL) CheckVersions(conn net.Conn) {
 		})
 		if err == nil {
 			c.ProtocolVersion = append(c.ProtocolVersion, name)
-		} else {
-			log.Println(name, err.Error())
 		}
 	}
 }

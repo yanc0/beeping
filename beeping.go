@@ -90,8 +90,8 @@ func main() {
 	gin.SetMode("release")
 
 	router := gin.New()
-	router.POST("/check", handlercheck)
-	router.GET("/", handlerdefault)
+	router.POST("/check", handlerCheck)
+	router.GET("/", handlerDefault)
 
 	log.Println("[INFO] Listening on", *listen, *port)
 	router.Run(*listen + ":" + *port)
