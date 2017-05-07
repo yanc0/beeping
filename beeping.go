@@ -23,6 +23,7 @@ var geodatfile *string
 var instance *string
 var listen *string
 var port *string
+var tlsmode *bool
 
 type Beeping struct {
 	Version string `json:"version"`
@@ -85,6 +86,7 @@ func main() {
 	instance = flag.String("instance", "", "beeping instance name (default hostname)")
 	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
 	port = flag.String("port", "8080", "The port to bind the server to")
+	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks")
 	flag.Parse()
 
 	gin.SetMode("release")
@@ -196,8 +198,10 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	if res.TLS != nil {
 		cTLS := &sslcheck.CheckSSL{}
-		cTLS.CheckCiphers(conn)
-		cTLS.CheckVersions(conn)
+		if *tlsmode {
+			cTLS.CheckCiphers(conn)
+			cTLS.CheckVersions(conn)
+		}
 		cTLS.CertExpiryDate = res.TLS.PeerCertificates[0].NotAfter
 		cTLS.CertExpiryDaysLeft = int64(cTLS.CertExpiryDate.Sub(time.Now()).Hours() / 24)
 		cTLS.CertSignature = res.TLS.PeerCertificates[0].SignatureAlgorithm.String()

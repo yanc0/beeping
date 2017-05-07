@@ -2,14 +2,13 @@ package sslcheck
 
 import (
 	"crypto/tls"
-	"log"
 	"net"
 	"time"
 )
 
 type CheckSSL struct {
-	Ciphers            []string  `json:"ciphers"`
-	ProtocolVersion    []string  `json:"protocol_versions"`
+	Ciphers            []string  `json:"ciphers,omitempty"`
+	ProtocolVersion    []string  `json:"protocol_versions,omitempty"`
 	CertExpiryDate     time.Time `json:"cert_expiry_date"`
 	CertExpiryDaysLeft int64     `json:"cert_expiry_days_left"`
 	CertSignature      string    `json:"cert_signature"`
