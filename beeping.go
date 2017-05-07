@@ -17,12 +17,14 @@ import (
 	"time"
 )
 
-var VERSION = "0.3.0"
+var VERSION = "0.4.0"
 var MESSAGE = "BeePing instance - HTTP Ping as a Service (github.com/yanc0/beeping)"
 var geodatfile *string
 var instance *string
+var listen *string
+var port *string
 
-type PMB struct {
+type Beeping struct {
 	Version string `json:"version"`
 	Message string `json:"message"`
 }
@@ -80,39 +82,47 @@ func NewCheck() *Check {
 
 func main() {
 	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
-	instance = flag.String("instance", "", "beeping instance name (default instance_name)")
+	instance = flag.String("instance", "", "beeping instance name (default hostname)")
+	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
+	port = flag.String("port", "8080", "The port to bind the server to")
 	flag.Parse()
 
 	gin.SetMode("release")
 
-	router := gin.Default()
+	router := gin.New()
 	router.POST("/check", handlercheck)
 	router.GET("/", handlerdefault)
-	router.Run()
+
+	log.Println("[INFO] Listening on", *listen, *port)
+	router.Run(*listen + ":" + *port)
 }
 
-func handlerdefault(c *gin.Context) {
-	var pmb PMB
-	pmb.Version = VERSION
-	pmb.Message = MESSAGE
-	c.JSON(http.StatusOK, pmb)
+func handlerDefault(c *gin.Context) {
+	var beeping Beeping
+	beeping.Version = VERSION
+	beeping.Message = MESSAGE
+	log.Println("[INFO] Beeping version", beeping.Version)
+	c.JSON(http.StatusOK, beeping)
 }
 
-func handlercheck(c *gin.Context) {
+func handlerCheck(c *gin.Context) {
 	var check = NewCheck()
 	if c.BindJSON(&check) == nil {
 		response, err := CheckHTTP(check)
 		if err != nil {
+			log.Println("[WARN] Check failed:", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		} else {
+			log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
 			c.JSON(http.StatusOK, response)
 		}
 	} else {
+		log.Println("[WARN] Invalid JSON sent")
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid json sent"})
 	}
 }
 
-// CheckHTTP do HTTP check and return a beeping reponse
+// CheckHTTP do HTTP check and return a beeping response
 func CheckHTTP(check *Check) (*Response, error) {
 	var response = NewResponse()
 	var conn net.Conn
@@ -196,14 +206,14 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[WARN] Cannot parse IP address", err.Error())
 	}
 
 	_ = geoIPCountry(*geodatfile, ip, response)
 
 	err = instanceName(*instance, response)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[WARN] Cannot set instance name", err.Error())
 	}
 
 	return response, nil
