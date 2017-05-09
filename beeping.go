@@ -242,7 +242,7 @@ func milliseconds(d time.Duration) int64 {
 }
 
 func geoIPCountry(geodatabase string, ip string, response *Response) error {
-	db, err := geoip2.Open(*geodatfile)
+	db, err := geoip2.Open(geodatabase)
 	if err != nil {
 		return err
 	}
