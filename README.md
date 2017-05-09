@@ -69,6 +69,9 @@ You can plug MaxMind GeoIP file to know on which country the pings goes.
 See: http://dev.maxmind.com/geoip/geoip2/geolite2/
 
 ## Build
+
+Beeping is known to only compile with Golang 1.8.x + (see #14)
+
 ```shell
 go get -u github.com/golang/dep
 go get -u github.com/yanc0/beeping
