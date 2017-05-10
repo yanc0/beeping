@@ -3,11 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -27,6 +29,7 @@ var instance *string
 var listen *string
 var port *string
 var tlsmode *bool
+var validatetarget *bool
 
 type Beeping struct {
 	Version string `json:"version"`
@@ -86,12 +89,58 @@ func NewCheck() *Check {
 	return &Check{Timeout: 10}
 }
 
+// Performs some validation checks on the target.
+// Returns nil if valid, returns an error otherwise.
+func (check *Check) validateTarget() error {
+	targetURL, err := url.Parse(check.URL)
+	if err != nil {
+		return err
+	}
+	ip := net.ParseIP(targetURL.Hostname())
+	if ip == nil {
+		// Hostname provided is not an IP. Without whitelisting, it is not possible to tell
+		// whether it is an internal hostname.
+		return nil // For now, hostnames are not needed for this check.
+	}
+
+	// Check for local network IPs
+	switch {
+	// Loopback address
+	case ip.IsLoopback():
+		return fmt.Errorf("Disallowed target")
+	// Link-local unicast
+	case ip.IsLinkLocalUnicast():
+		return fmt.Errorf("Disallowed target")
+	// Link-local multicast
+	case ip.IsLinkLocalMulticast():
+		return fmt.Errorf("Disallowed target")
+	// Private network (10.0.0.0/8)
+	case len(ip) == 4 && ip[0] == 10:
+		return fmt.Errorf("Disallowed target")
+	// Private network (Carrier-grade NAT; 100.64.0.0/10)
+	case len(ip) == 4 && ip[0] == 100 && ip[1] >= 64 && ip[1] <= 127:
+		return fmt.Errorf("Disallowed target")
+	// Private network (172.16.0.0/12)
+	case len(ip) == 4 && ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31:
+		return fmt.Errorf("Disallowed target")
+	// Private network (192.168.0.0/16)
+	case len(ip) == 4 && ip[0] == 192 && ip[1] == 16:
+		return fmt.Errorf("Disallowed target")
+	// Private network (fc00::/7)
+	case len(ip) == 16 && (ip[0] == 0xfc || ip[0] == 0xfd):
+		return fmt.Errorf("Disallowed target")
+	}
+
+	return nil
+}
+
 func main() {
 	geodatfile = flag.String("geodatfile", "/opt/GeoIP/GeoLite2-City.mmdb", "geoIP database path")
 	instance = flag.String("instance", "", "beeping instance name (default hostname)")
 	listen = flag.String("listen", "127.0.0.1", "The host to bind the server to")
 	port = flag.String("port", "8080", "The port to bind the server to")
 	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks (slow)")
+	validatetarget = flag.Bool("validatetarget", true, "Perform some security checks on the target provided")
 	flag.Parse()
 
 	gin.SetMode("release")
@@ -115,13 +164,29 @@ func handlerDefault(c *gin.Context) {
 func handlerCheck(c *gin.Context) {
 	var check = NewCheck()
 	if c.BindJSON(&check) == nil {
-		response, err := CheckHTTP(check)
-		if err != nil {
-			log.Println("[WARN] Check failed:", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		if *validatetarget {
+			if err := check.validateTarget(); err != nil {
+				log.Println("[WARN] Invalid target:", err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			} else {
+				response, err := CheckHTTP(check)
+				if err != nil {
+					log.Println("[WARN] Check failed:", err.Error())
+					c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+				} else {
+					log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
+					c.JSON(http.StatusOK, response)
+				}
+			}
 		} else {
-			log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
-			c.JSON(http.StatusOK, response)
+			response, err := CheckHTTP(check)
+			if err != nil {
+				log.Println("[WARN] Check failed:", err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			} else {
+				log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
+				c.JSON(http.StatusOK, response)
+			}
 		}
 	} else {
 		log.Println("[WARN] Invalid JSON sent")
