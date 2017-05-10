@@ -3,10 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"github.com/gin-gonic/gin"
-	"github.com/oschwald/geoip2-golang"
-	"github.com/tcnksm/go-httpstat"
-	"github.com/yanc0/beeping/sslcheck"
 	"io/ioutil"
 	"log"
 	"net"
@@ -15,6 +11,11 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/oschwald/geoip2-golang"
+	"github.com/tcnksm/go-httpstat"
+	"github.com/yanc0/beeping/sslcheck"
 )
 
 var VERSION = "0.5.0"
@@ -59,7 +60,7 @@ type Response struct {
 	HTTPStatus      string `json:"http_status"`
 	HTTPStatusCode  int    `json:"http_status_code"`
 	HTTPBodyPattern bool   `json:"http_body_pattern"`
-	HTTPHeader	bool   `json:"http_header"`
+	HTTPHeader      bool   `json:"http_header"`
 	HTTPRequestTime int64  `json:"http_request_time"`
 
 	InstanceName string `json:"instance_name"`
