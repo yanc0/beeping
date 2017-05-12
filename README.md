@@ -54,6 +54,8 @@ Usage of ./beeping:
         The port to bind the server to (default "8080")
   -tlsmode
         Activate SSL/TLS versions and Cipher support checks (slow)
+  -validatetarget
+          Perform some security checks on the target provided (default true)
 ```
 
 **Notes**
@@ -70,7 +72,7 @@ See: http://dev.maxmind.com/geoip/geoip2/geolite2/
 
 ## Build
 
-Beeping is known to only compile with Golang 1.8.x + (see #14)
+Beeping is known to only compile with Golang 1.8.x + (see #14 )
 
 ```shell
 go get -u github.com/golang/dep
@@ -150,6 +152,10 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 
 ## Changelog
 
+### 0.6.0 - UNRELEASED
+
+  * Validate target - CWE-918 GH-16 (Aaron Hnatiw - @insp3ctre)
+
 ### 0.5.0 - 2017-05-07
 
   * Add TLS Mode, now show server supported ciphers and SSL/TLS versions
@@ -183,6 +189,12 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 ## Contributing
 
 Feel free to make a pull request.
+
+## Contributors
+
+ * Yann Coleu
+ * Aaron Hnatiw
+ * Aimof
 
 ## Licence
 
