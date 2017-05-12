@@ -72,7 +72,7 @@ See: http://dev.maxmind.com/geoip/geoip2/geolite2/
 
 ## Build
 
-Beeping is known to only compile with Golang 1.8.x + (see #14 )
+Beeping is known to only compile with Golang 1.8.x + (see [#14](../../issues/14) )
 
 ```shell
 go get -u github.com/golang/dep
@@ -154,7 +154,7 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 
 ### 0.6.0 - UNRELEASED
 
-  * Validate target - CWE-918 GH-16 (Aaron Hnatiw - @insp3ctre)
+  * Validate target - CWE-918 [#16](../../pulls/16) [Aaron Hnatiw](https://github.com/insp3ctre)
 
 ### 0.5.0 - 2017-05-07
 
