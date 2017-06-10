@@ -230,18 +230,24 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	timeout := time.Duration(check.Timeout * time.Second)
 
-	client := &http.Client{Transport: tr, Timeout: timeout}
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	res.Body.Close()
 	timeEndBody := time.Now()
 	result.End(timeEndBody)
 	var total = result.Total(timeEndBody)
