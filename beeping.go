@@ -169,7 +169,7 @@ func handlerCheck(c *gin.Context) {
 				log.Println("[WARN] Invalid target:", err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			} else {
-				response, err := CheckHTTP(check)
+				response, err := CheckHTTP(check, c.Request)
 				if err != nil {
 					log.Println("[WARN] Check failed:", err.Error())
 					c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
@@ -179,7 +179,7 @@ func handlerCheck(c *gin.Context) {
 				}
 			}
 		} else {
-			response, err := CheckHTTP(check)
+			response, err := CheckHTTP(check, c.Request)
 			if err != nil {
 				log.Println("[WARN] Check failed:", err.Error())
 				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
@@ -195,13 +195,31 @@ func handlerCheck(c *gin.Context) {
 }
 
 // CheckHTTP do HTTP check and return a beeping response
-func CheckHTTP(check *Check) (*Response, error) {
+func CheckHTTP(check *Check, request *http.Request) (*Response, error) {
 	var response = NewResponse()
 	var conn net.Conn
 
 	req, err := http.NewRequest("GET", check.URL, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	// Add the Forwarded header to track remote IP address in requests.
+	src := request.RemoteAddr
+	if strings.Count(src, ":") > 1 {
+		// IPv6 address. Remove port from header (unneeded information disclosure)
+		srcSlice := strings.Split(src, ":")
+		srcIP := "["
+		for index := 0; index < len(srcSlice)-2; index++ {
+			srcIP += fmt.Sprintf("%s:", srcSlice[index])
+		}
+		srcIP += fmt.Sprintf("%s]", srcSlice[len(srcSlice)-2])
+		req.Header.Set("Forwarded", fmt.Sprintf("for=\"%s\"", srcIP))
+	} else {
+		// IPv4 address. Remove port from header (unneeded information disclosure)
+		srcSlice := strings.Split(src, ":")
+		srcIP := srcSlice[0]
+		req.Header.Set("Forwarded", fmt.Sprintf("for=%s", srcIP))
 	}
 
 	req.Header.Set("User-Agent", USERAGENT)
