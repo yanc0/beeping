@@ -241,13 +241,13 @@ func CheckHTTP(check *Check) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	res.Body.Close()
 	timeEndBody := time.Now()
 	result.End(timeEndBody)
 	var total = result.Total(timeEndBody)
