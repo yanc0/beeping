@@ -163,6 +163,9 @@ $ curl -XPOST http://localhost:8080/check -d '{"url":"http://127.0.0.1:3000","au
 ### 0.6.0 - UNRELEASED
 
   * Validate target - CWE-918 [#16](../../pulls/16) [Aaron Hnatiw](https://github.com/insp3ctre)
+  * Include remote address in request header [#19](../../pulls/19) [Aaron Hnatiw](https://github.com/insp3ctre)
+  * Basic HTTP auth [#23](../../pulls/23) [Brice Colucci](https://github.com/bcolucci)
+  * Go native HTTP server instead of Gin [#24](../../pulls/24) [Brice Colucci](https://github.com/bcolucci)
 
 ### 0.5.0 - 2017-05-07
 
@@ -200,9 +203,10 @@ Feel free to make a pull request.
 
 ## Contributors
 
- * Yann Coleu
  * Aaron Hnatiw
  * Aimof
+ * Brice Colucci
+ * Yann Coleu
 
 ## Licence
 
