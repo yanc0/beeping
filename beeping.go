@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -43,6 +44,7 @@ type Check struct {
 	Header   string        `json:"header"`
 	Insecure bool          `json:"insecure"`
 	Timeout  time.Duration `json:"timeout"`
+	Auth     string        `json:"auth"`
 }
 
 type Timeline struct {
@@ -163,35 +165,39 @@ func handlerDefault(c *gin.Context) {
 
 func handlerCheck(c *gin.Context) {
 	var check = NewCheck()
-	if c.BindJSON(&check) == nil {
-		if *validatetarget {
-			if err := check.validateTarget(); err != nil {
-				log.Println("[WARN] Invalid target:", err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-			} else {
-				response, err := CheckHTTP(check)
-				if err != nil {
-					log.Println("[WARN] Check failed:", err.Error())
-					c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-				} else {
-					log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
-					c.JSON(http.StatusOK, response)
-				}
-			}
-		} else {
-			response, err := CheckHTTP(check)
-			if err != nil {
-				log.Println("[WARN] Check failed:", err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-			} else {
-				log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
-				c.JSON(http.StatusOK, response)
-			}
-		}
-	} else {
+	if c.BindJSON(&check) != nil {
 		log.Println("[WARN] Invalid JSON sent")
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid json sent"})
+		return
 	}
+
+	// with security checks
+	if *validatetarget {
+		if err := check.validateTarget(); err != nil {
+			log.Println("[WARN] Invalid target:", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+		response, err := CheckHTTP(check)
+		if err != nil {
+			log.Println("[WARN] Check failed:", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+		log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	// without security checks
+	response, err := CheckHTTP(check)
+	if err != nil {
+		log.Println("[WARN] Check failed:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
+	c.JSON(http.StatusOK, response)
 }
 
 // CheckHTTP do HTTP check and return a beeping response
@@ -205,6 +211,11 @@ func CheckHTTP(check *Check) (*Response, error) {
 	}
 
 	req.Header.Set("User-Agent", USERAGENT)
+
+	if len(check.Auth) > 0 {
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(check.Auth)))
+	}
+
 	// Create go-httpstat powered context and pass it to http.Request
 	var result httpstat.Result
 	ctx := httpstat.WithHTTPStat(req.Context(), &result)
@@ -254,10 +265,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	tr.CloseIdleConnections()
 
-	pattern := true
-	if !strings.Contains(string(body), check.Pattern) {
-		pattern = false
-	}
+	pattern := strings.Contains(string(body), check.Pattern)
 
 	header := true
 	if check.Header != "" {
