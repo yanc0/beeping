@@ -169,11 +169,7 @@ func handlerDefault(w http.ResponseWriter, r *http.Request) {
 	beeping.Version = VERSION
 	beeping.Message = MESSAGE
 	log.Println("[INFO] Beeping version", beeping.Version)
-	jsonRes, err := json.Marshal(beeping)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	jsonRes, _ := json.Marshal(beeping)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonRes)
 }
