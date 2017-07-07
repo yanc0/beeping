@@ -4,9 +4,9 @@
 _previously named pingmeback_
 
   > It forage the servers and brings the metrics back to the hive
-  
+
 ![beeping](http://oi68.tinypic.com/2yngw9h.jpg)  
-  
+
 BeePing is a distant http check as a Service. Call the very simple API, BeePing
 will measure website for you.
 
@@ -150,6 +150,14 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 }
 ```
 
+## HTTP Basic Auth
+
+Just add the 'auth' option in your JSON.
+
+```
+$ curl -XPOST http://localhost:8080/check -d '{"url":"http://127.0.0.1:3000","auth":"john:secret"}'
+```
+
 ## Changelog
 
 ### 0.6.0 - UNRELEASED
@@ -181,7 +189,7 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 
 ## To Do
 
-- [ ] Add HTTP Auth
+- [x] Add HTTP Auth
 - [ ] Add tests
 - [ ] More metrics
 - [ ] Packaging
