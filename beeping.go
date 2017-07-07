@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -47,6 +48,7 @@ type Check struct {
 	Header   string        `json:"header"`
 	Insecure bool          `json:"insecure"`
 	Timeout  time.Duration `json:"timeout"`
+	Auth     string        `json:"auth"`
 }
 
 type Timeline struct {
@@ -233,6 +235,11 @@ func CheckHTTP(check *Check) (*Response, error) {
 	}
 
 	req.Header.Set("User-Agent", USERAGENT)
+
+	if len(check.Auth) > 0 {
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(check.Auth)))
+	}
+
 	// Create go-httpstat powered context and pass it to http.Request
 	var result httpstat.Result
 	ctx := httpstat.WithHTTPStat(req.Context(), &result)
@@ -282,10 +289,7 @@ func CheckHTTP(check *Check) (*Response, error) {
 
 	tr.CloseIdleConnections()
 
-	pattern := true
-	if !strings.Contains(string(body), check.Pattern) {
-		pattern = false
-	}
+	pattern := strings.Contains(string(body), check.Pattern)
 
 	header := true
 	if check.Header != "" {
