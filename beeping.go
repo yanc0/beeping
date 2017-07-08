@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +20,8 @@ import (
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
 	"github.com/yanc0/beeping/sslcheck"
+
+	auth "github.com/abbot/go-http-auth"
 )
 
 var VERSION = "0.5.0"
@@ -31,6 +34,7 @@ var listen *string
 var port *string
 var tlsmode *bool
 var validatetarget *bool
+var basicAuth *string
 
 type ErrorMessage struct {
 	Message string `json:"message"`
@@ -157,13 +161,38 @@ func main() {
 	port = flag.String("port", "8080", "The port to bind the server to")
 	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks (slow)")
 	validatetarget = flag.Bool("validatetarget", true, "Perform some security checks on the target provided")
+	basicAuth = flag.String("auth", "", "HTTP Basic Auth e.g. john:secret")
 	flag.Parse()
 
-	http.HandleFunc("/check", handlerCheck)
-	http.HandleFunc("/", handlerDefault)
+	if basicAuth == nil {
+		PlugBasicHandlers()
+	} else {
+		PlugAuthenticatedHandlers()
+	}
 
 	log.Println("[INFO] Listening on", *listen, *port)
 	http.ListenAndServe(*listen+":"+*port, nil)
+}
+
+func PlugBasicHandlers() {
+	http.HandleFunc("/check", handlerCheck)
+	http.HandleFunc("/", handlerDefault)
+}
+
+func PlugAuthenticatedHandlers() {
+	splitAuth := strings.Split(*basicAuth, ":")
+	if len(splitAuth) < 2 {
+		panic(errors.New("Invalid HTTP Basic Auth format"))
+	}
+	authenticator := auth.NewDigestAuthenticator(*instance, func(user, realm string) string {
+		if user == splitAuth[0] {
+			return splitAuth[1]
+		}
+		return ""
+	})
+	log.Println("[INFO] HTTP Basic Auth enabled")
+	http.HandleFunc("/check", auth.JustCheck(authenticator, handlerCheck))
+	http.HandleFunc("/", auth.JustCheck(authenticator, handlerDefault))
 }
 
 func handlerDefault(w http.ResponseWriter, r *http.Request) {

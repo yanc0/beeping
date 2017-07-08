@@ -152,7 +152,19 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 
 ## HTTP Basic Auth
 
-Just add the 'auth' option in your JSON.
+### Protect your BeePing server
+
+Add the 'auth' argument :
+
+```
+$ go run beeping.go -auth "john:8c7d3c4a9107c7a929f82210d9241d4e"
+```
+
+**For the moment, only digest method is supported**: The password depends also on the realm. You can generate one from here (choose digest) : [http://www.askapache.com/online-tools/htpasswd-generator/](http://www.askapache.com/online-tools/htpasswd-generator/)
+
+### Authenticated request to the client
+
+Add the 'auth' field in your JSON.
 
 ```
 $ curl -XPOST http://localhost:8080/check -d '{"url":"http://127.0.0.1:3000","auth":"john:secret"}'
