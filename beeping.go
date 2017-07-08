@@ -164,7 +164,7 @@ func main() {
 	basicAuth = flag.String("auth", "", "HTTP Basic Auth e.g. john:secret")
 	flag.Parse()
 
-	if basicAuth == nil {
+	if *basicAuth == "" {
 		PlugBasicHandlers()
 	} else {
 		PlugAuthenticatedHandlers()
