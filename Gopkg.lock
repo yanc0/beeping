@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/abbot/go-http-auth"
-  packages = ["."]
-  revision = "0ddd408d5d60ea76e320503cc7dd091992dee608"
-  version = "v0.4.0"
-
-[[projects]]
   name = "github.com/oschwald/geoip2-golang"
   packages = ["."]
   revision = "496a3cbcb65a3cb54497fe4ae2273319e85160a4"
@@ -32,18 +26,6 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/crypto"
-  packages = ["bcrypt","blowfish"]
-  revision = "08a7dbd3d99261d9ae86ef1b3b8bdb0382fb82cd"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "5602c733f70afc6dcec6766be0d5034d4c4f14de"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
   revision = "f3918c30c5c2cb527c0b071a27c35120a6c0719a"
@@ -51,6 +33,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "abb07f1de2e2ba4f16fc2cc3712a43529a18f6f7dd67310af5120af5c4d1246d"
+  inputs-digest = "c2420b8e195d681f876e58304a699cc47c4ff446fbae426f42272180f4b8d933"
   solver-name = "gps-cdcl"
   solver-version = 1

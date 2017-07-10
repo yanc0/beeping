@@ -154,13 +154,19 @@ beeping returns HTTP 500 when check fail. The body contains the reason of the fa
 
 ### Protect your BeePing server
 
-Add the 'auth' argument :
+Add the auth-* arguments :
+
+- **auth-user** The auth username
+- **auth-secret** The auth user secret
+- **auth-method** The auth secret digest mechanism
+
+**For now, only the 'clear' method is supported.**
+
+For example :
 
 ```
-$ go run beeping.go -auth "john:8c7d3c4a9107c7a929f82210d9241d4e"
+$ go run beeping.go -auth-user "john" -auth-password "passw0rd"
 ```
-
-**For the moment, only digest method is supported**: The password depends also on the realm. You can generate one from here (choose digest) : [http://www.askapache.com/online-tools/htpasswd-generator/](http://www.askapache.com/online-tools/htpasswd-generator/)
 
 ### Authenticated request to the client
 

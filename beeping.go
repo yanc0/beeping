@@ -20,8 +20,6 @@ import (
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
 	"github.com/yanc0/beeping/sslcheck"
-
-	auth "github.com/abbot/go-http-auth"
 )
 
 var VERSION = "0.5.0"
@@ -34,7 +32,16 @@ var listen *string
 var port *string
 var tlsmode *bool
 var validatetarget *bool
-var basicAuth *string
+
+var authUser *string
+var authSecret *string
+var authMethod *string
+
+type HTTPAuth struct {
+	User, Secret, Method string
+}
+
+var auth *HTTPAuth
 
 type ErrorMessage struct {
 	Message string `json:"message"`
@@ -161,41 +168,57 @@ func main() {
 	port = flag.String("port", "8080", "The port to bind the server to")
 	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks (slow)")
 	validatetarget = flag.Bool("validatetarget", true, "Perform some security checks on the target provided")
-	basicAuth = flag.String("auth", "", "HTTP Basic Auth e.g. john:secret")
+	authUser = flag.String("auth-user", "", "HTTP Auth User e.g. 'admin'")
+	authSecret = flag.String("auth-secret", "", "HTTP Auth Secret e.g. 'passw0rd'")
+	authMethod = flag.String("auth-method", "clear", "HTTP Auth Method (only 'clear' for now)")
 	flag.Parse()
 
-	if *basicAuth == "" {
-		PlugBasicHandlers()
-	} else {
-		PlugAuthenticatedHandlers()
-	}
+	instantiateAuthMechanism()
+
+	http.HandleFunc("/check", handlerCheck)
+	http.HandleFunc("/", handlerDefault)
 
 	log.Println("[INFO] Listening on", *listen, *port)
 	http.ListenAndServe(*listen+":"+*port, nil)
 }
 
-func PlugBasicHandlers() {
-	http.HandleFunc("/check", handlerCheck)
-	http.HandleFunc("/", handlerDefault)
+func instantiateAuthMechanism() {
+	if *authUser == "" {
+		return
+	}
+	if *authSecret == "" {
+		panic(errors.New("Auth secret can not be empty."))
+	}
+	switch strings.ToLower(*authMethod) {
+	case "clear":
+		break
+	default:
+		panic(errors.New("Unsupported auth method."))
+	}
+	auth = &HTTPAuth{*authUser, *authSecret, *authMethod}
+	log.Printf("[INFO] HTTP Auth enabled: %v\n", auth)
 }
 
-func PlugAuthenticatedHandlers() {
-	splitAuth := strings.Split(*basicAuth, ":")
-	if len(splitAuth) < 2 {
-		panic(errors.New("Invalid HTTP Basic Auth format"))
+func checkAuth(w http.ResponseWriter, r *http.Request) bool {
+	if auth == nil {
+		return true
 	}
-	authenticator := auth.NewDigestAuthenticator(*instance, func(user, realm string) string {
-		if user == splitAuth[0] {
-			return splitAuth[1]
-		}
-		return ""
-	})
-	log.Println("[INFO] HTTP Basic Auth enabled")
-	http.HandleFunc("/check", auth.JustCheck(authenticator, handlerCheck))
-	http.HandleFunc("/", auth.JustCheck(authenticator, handlerDefault))
+	user, pass, _ := r.BasicAuth()
+	fmt.Println(user + " " + pass)
+	//TODO depending the auth method, transform the pass
+	if user == auth.User && pass == auth.Secret {
+		return true
+	}
+	log.Println("[INFO] Unauthorized (", user, ")")
+	w.Header().Add("WWW-Authenticate", "Basic realm=\"Access Denied\"")
+	http.Error(w, "401, Unauthorized", 401)
+	return false
 }
 
 func handlerDefault(w http.ResponseWriter, r *http.Request) {
+	if !checkAuth(w, r) {
+		return
+	}
 	var beeping Beeping
 	beeping.Version = VERSION
 	beeping.Message = MESSAGE
@@ -206,6 +229,10 @@ func handlerDefault(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerCheck(w http.ResponseWriter, r *http.Request) {
+	if !checkAuth(w, r) {
+		return
+	}
+
 	var check = NewCheck()
 
 	w.Header().Set("Content-Type", "application/json")
