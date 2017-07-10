@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
 	"github.com/yanc0/beeping/sslcheck"
@@ -31,6 +31,10 @@ var listen *string
 var port *string
 var tlsmode *bool
 var validatetarget *bool
+
+type ErrorMessage struct {
+	Message string `json:"message"`
+}
 
 type Beeping struct {
 	Version string `json:"version"`
@@ -79,6 +83,16 @@ type Response struct {
 	Timeline *Timeline          `json:"timeline"`
 	Geo      *Geo               `json:"geo,omitempty"`
 	SSL      *sslcheck.CheckSSL `json:"ssl,omitempty"`
+}
+
+func NewErrorMessage(message string) *ErrorMessage {
+	var response = ErrorMessage{}
+	response.Message = message
+	return &response
+}
+
+func InvalidJSONResponse() *ErrorMessage {
+	return NewErrorMessage("Invalid JSON sent")
 }
 
 func NewResponse() *Response {
@@ -145,59 +159,69 @@ func main() {
 	validatetarget = flag.Bool("validatetarget", true, "Perform some security checks on the target provided")
 	flag.Parse()
 
-	gin.SetMode("release")
-
-	router := gin.New()
-	router.POST("/check", handlerCheck)
-	router.GET("/", handlerDefault)
+	http.HandleFunc("/check", handlerCheck)
+	http.HandleFunc("/", handlerDefault)
 
 	log.Println("[INFO] Listening on", *listen, *port)
-	router.Run(*listen + ":" + *port)
+	http.ListenAndServe(*listen+":"+*port, nil)
 }
 
-func handlerDefault(c *gin.Context) {
+func handlerDefault(w http.ResponseWriter, r *http.Request) {
 	var beeping Beeping
 	beeping.Version = VERSION
 	beeping.Message = MESSAGE
 	log.Println("[INFO] Beeping version", beeping.Version)
-	c.JSON(http.StatusOK, beeping)
+	jsonRes, _ := json.Marshal(beeping)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonRes)
 }
 
-func handlerCheck(c *gin.Context) {
+func handlerCheck(w http.ResponseWriter, r *http.Request) {
 	var check = NewCheck()
-	if c.BindJSON(&check) != nil {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&check)
+	if err != nil {
 		log.Println("[WARN] Invalid JSON sent")
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid json sent"})
+		jsonRes, _ := json.Marshal(InvalidJSONResponse())
+		w.Write(jsonRes)
 		return
 	}
 
-	// with security checks
-	if *validatetarget {
-		if err := check.validateTarget(); err != nil {
-			log.Println("[WARN] Invalid target:", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-			return
-		}
+	if !*validatetarget {
 		response, err := CheckHTTP(check)
 		if err != nil {
 			log.Println("[WARN] Check failed:", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			jsonRes, _ := json.Marshal(NewErrorMessage(err.Error()))
+			w.Write(jsonRes)
 			return
 		}
 		log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
-		c.JSON(http.StatusOK, response)
+		jsonRes, _ := json.Marshal(response)
+		w.Write(jsonRes)
 		return
 	}
 
-	// without security checks
+	if err := check.validateTarget(); err != nil {
+		log.Println("[WARN] Invalid target:", err.Error())
+		jsonRes, _ := json.Marshal(NewErrorMessage(err.Error()))
+		w.Write(jsonRes)
+		return
+	}
+
 	response, err := CheckHTTP(check)
 	if err != nil {
 		log.Println("[WARN] Check failed:", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		jsonRes, _ := json.Marshal(NewErrorMessage(err.Error()))
+		w.Write(jsonRes)
 		return
 	}
+
 	log.Println("[INFO] Successful check:", check.URL, "-", response.HTTPRequestTime, "ms")
-	c.JSON(http.StatusOK, response)
+	jsonRes, _ := json.Marshal(response)
+	w.Write(jsonRes)
 }
 
 // CheckHTTP do HTTP check and return a beeping response
