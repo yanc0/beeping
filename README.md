@@ -85,7 +85,7 @@ go build
 ## API Usage
 
 ```
-$ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "pattern": "find me", "header": "Server:GitHub.com", "insecure": false, "timeout": 20}
+$ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "pattern": "find me", "header": "Server:GitHub.com", "insecure": false, "timeout": 20}'
 {
   "http_status": "200 OK",
   "http_status_code": 200,
