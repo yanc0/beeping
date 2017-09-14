@@ -3,7 +3,7 @@
 
 _previously named pingmeback_
 
-  > It forage the servers and brings the metrics back to the hive
+  > It forages the servers and brings the metrics back to the hive
 
 ![beeping](http://oi68.tinypic.com/2yngw9h.jpg)  
 
@@ -139,6 +139,10 @@ $ curl -XPOST http://localhost:8080/check -d '{"url": "https://google.fr", "patt
 * If header is not filled `http_header` is always `true`
 * `ssl` is omitted when `http://`. The same for the `tls_handshake` field
 * `geo` is omitted if geoip is not set
+
+## Beeping Clients
+
+* beeping-client (python) : you can use the [beeping-client](https://github.com/QuentinDeSoete/beeping-client) made by [Quentin De Soete](https://github.com/QuentinDeSoete), in Python.
 
 ## Error Handling
 
