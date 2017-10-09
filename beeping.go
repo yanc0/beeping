@@ -163,7 +163,9 @@ func main() {
 	http.HandleFunc("/", handlerDefault)
 
 	log.Println("[INFO] Listening on", *listen, *port)
-	http.ListenAndServe(*listen+":"+*port, nil)
+	if err := http.ListenAndServe(*listen+":"+*port, nil); err != nil {
+		log.Fatalf("could not listen on %s:%s: %v", *listen, *port, err)
+	}
 }
 
 func handlerDefault(w http.ResponseWriter, r *http.Request) {
