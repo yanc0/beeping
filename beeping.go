@@ -13,11 +13,9 @@ import (
 	"os"
 	"strings"
 	"time"
-
 	"github.com/olpia/beeping/httpcheck"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
-	"github.com/yanc0/beeping/sslcheck"
 )
 
 var VERSION = "0.5.0"
@@ -227,7 +225,7 @@ func CheckHTTP(check *httpcheck.Check) (*httpcheck.Response, error) {
 	response.ContentTransfer = milliseconds(result.ContentTransfer(timeEndBody))
 
 	if res.TLS != nil {
-		cTLS := &sslcheck.CheckSSL{}
+		cTLS := &httpcheck.CheckSSL{}
 		if *tlsmode {
 			cTLS.CheckCiphers(conn)
 			cTLS.CheckVersions(conn)

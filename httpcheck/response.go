@@ -2,7 +2,6 @@ package httpcheck
 
 import (
 	"fmt"
-	"github.com/yanc0/beeping/sslcheck"
 	"net"
 	"net/url"
 	"time"
@@ -47,9 +46,9 @@ type Response struct {
 	ServerProcessing int64 `json:"server_processing"`
 	ContentTransfer  int64 `json:"content_transfer"`
 
-	Timeline *Timeline          `json:"timeline"`
-	Geo      *Geo               `json:"geo,omitempty"`
-	SSL      *sslcheck.CheckSSL `json:"ssl,omitempty"`
+	Timeline *Timeline `json:"timeline"`
+	Geo      *Geo      `json:"geo,omitempty"`
+	SSL      *CheckSSL `json:"ssl,omitempty"`
 }
 
 // Performs some validation checks on the target.
