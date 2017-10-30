@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 	"time"
-	"github.com/olpia/beeping/httpcheck"
+	"github.com/yanc0/beeping/httpcheck"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/tcnksm/go-httpstat"
 )
