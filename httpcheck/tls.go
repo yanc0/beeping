@@ -1,4 +1,4 @@
-package sslcheck
+package httpcheck
 
 import (
 	"crypto/tls"
