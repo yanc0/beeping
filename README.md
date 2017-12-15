@@ -10,12 +10,21 @@ _previously named pingmeback_
 BeePing is a distant http check as a Service. Call the very simple API, BeePing
 will measure website for you.
 
-:us::green_heart: 200 OK - **119 ms**  
-:book: DNS - **9 ms**  
-:arrows_counterclockwise: TCP - **6 ms**  
-:lock: TLS - **52 ms**  
-:desktop_computer: Server Processing - **43 ms**  
-:arrow_down_small: Transfer - **6 ms**  
+:us::green_heart: 200 OK - **119 ms** - (http_status_code, http_request_time)
+
+:book: DNS - **9 ms** - (dns_lookup)
+
+:arrows_counterclockwise: TCP - **6 ms** - (tcp_connection)
+
+:lock: TLS - **52 ms** - (tls_handshake)
+
+:desktop_computer: Server Processing - **43 ms** - (server_processing)
+
+:arrow_down_small: Transfer - **6 ms** - (content_transfer)
+
+Other attributes :
+* cert_expiry_days_left
+* http_body_pattern
 
 Features:
 
