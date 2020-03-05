@@ -5,8 +5,6 @@ _previously named pingmeback_
 
   > It forages the servers and brings the metrics back to the hive
 
-![beeping](http://oi68.tinypic.com/2yngw9h.jpg)  
-
 BeePing is a distant http check as a Service. Call the very simple API, BeePing
 will measure website for you.
 
