@@ -1,3 +1,8 @@
+# DEPRECATED
+
+This code is unmaintained anymore. [Blackbox exporter](https://github.com/prometheus/blackbox_exporter) is the right way
+to monitor your http services.
+
 # BeePing v0.5.0
 [![Build Status](https://travis-ci.org/yanc0/beeping.svg?branch=master)](https://travis-ci.org/yanc0/beeping)
 
