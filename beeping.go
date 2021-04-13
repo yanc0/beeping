@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -28,6 +29,7 @@ var listen *string
 var port *string
 var tlsmode *bool
 var validatetarget *bool
+var handle5XX *bool
 
 type ErrorMessage struct {
 	Message string `json:"message"`
@@ -65,6 +67,7 @@ func main() {
 	port = flag.String("port", "8080", "The port to bind the server to")
 	tlsmode = flag.Bool("tlsmode", false, "Activate SSL/TLS versions and Cipher support checks (slow)")
 	validatetarget = flag.Bool("validatetarget", true, "Perform some security checks on the target provided")
+	handle5XX = flag.Bool("handle5XX", true, "Handle responding HTTP code 5XX to client")
 	flag.Parse()
 
 	http.HandleFunc("/check", handlerCheck)
@@ -184,7 +187,34 @@ func CheckHTTP(check *httpcheck.Check) (*httpcheck.Response, error) {
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		log.Printf("[WARN] Failed Response: %v", res)
+		if *handle5XX {
+			if urlErr, ok := err.(*url.Error); ok {
+				if netErr, ok := urlErr.Err.(net.Error); ok {
+					if netErr.Timeout() {
+						response.HTTPStatus = "524 Client Timeout Occurred"
+						response.HTTPStatusCode = 524
+					}
+				}
+				if netOpErr, ok := urlErr.Err.(*net.OpError); ok {
+					if _, ok := netOpErr.Err.(*os.SyscallError); ok {
+						response.HTTPStatus = "522 TCP Handshake Failed"
+						response.HTTPStatusCode = 522
+					}
+					if _, ok := netOpErr.Err.(*net.DNSError); ok {
+						response.HTTPStatus = "523 Origin Is Unreachable"
+						response.HTTPStatusCode = 523
+					}
+				}
+			} else {
+				// For unknown errors, responding 500
+				response.HTTPStatus = "500 Internal Server Error"
+				response.HTTPStatusCode = 500
+			}
+			return response, nil
+		} else {
+			return nil, err
+		}
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
